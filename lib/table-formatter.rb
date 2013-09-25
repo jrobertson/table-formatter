@@ -1,4 +1,6 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
+
+# file: table-formatter.rb
 
 class TableFormatter
 
@@ -10,19 +12,26 @@ class TableFormatter
     @source = o[:source]
     @labels = o[:labels]
     @border = o[:border]
+    @maxwidth = 60
   end
   
   def display(width=nil)
-    a = @source
+    
+    #width ||= @maxwidth
+    @width = width
+    @maxwidth = width if width
+    a = @source.map {|x| x.map.to_a}.to_a
     labels = @labels
     column_widths = fetch_column_widths(a)
+
     column_widths[-1] -= column_widths.inject(&:+) - width if width
 
-    records = format_rows(a.clone, column_widths)
+    records = format_rows(a, column_widths)
 
     div =  (border == true ? '-' : ' ') * records[0].length + "\n"
     label_buffer = ''    
     label_buffer = format_cols(labels, column_widths) + "\n" + div if labels
+
     div + label_buffer + records.join("\n") + "\n" + div
 
   end
@@ -36,6 +45,7 @@ class TableFormatter
   end
 
   def fetch_column_widths(a)
+
     d = tabulate(a).map &:flatten
 
     # find the maximum lengths
@@ -52,7 +62,11 @@ class TableFormatter
   end
 
   def format_rows(a, col_widths)
-    col_widths[-1] -= col_widths.inject(&:+) - 80
+
+    @width = col_widths.inject(&:+)
+
+    col_widths[-1] -= col_widths.inject(&:+) - @maxwidth
+
     a.each_with_index do |x,i|
       col_rows = wrap(x[-1], col_widths[-1]).split(/\n/)
       if col_rows.length > 1 then
@@ -64,7 +78,7 @@ class TableFormatter
     a.map {|row| format_cols(row, col_widths)}
   end
 
-  def wrap(s, col=80)
+  def wrap(s, col=@maxwidth)
     s.gsub(/(.{1,#{col}})( +|$\n?)|(.{1,#{col}})/,
       "\\1\\3\n") 
   end
