@@ -7,16 +7,30 @@ class TableFormatter
   attr_accessor :source, :labels, :border
   
   def initialize(opt={})    
+
     o = {source: nil, labels: nil, border: true}.merge(opt)
     super()
     @source = o[:source]
-    @labels = o[:labels]
+    @raw_labels = o[:labels]
     @border = o[:border]
     @maxwidth = 60
   end
   
   def display(width=nil)
-    
+
+    if @raw_labels then
+
+      @align_cols, @labels = [], []
+
+      @raw_labels.each do |raw_label|
+
+        col_just, label = just(raw_label)
+        @align_cols << col_just
+        @labels << label
+      end
+
+    end
+
     #width ||= @maxwidth
     @width = width
     @maxwidth = width if width
@@ -38,12 +52,12 @@ class TableFormatter
 
   alias to_s display
 
-  private
-  
-  def tabulate(a)
-    a[0].zip(a.length > 2 ? tabulate(a[1..-1]) : a[-1])
+  def labels=(a)
+    @raw_labels = a
   end
 
+  private
+  
   def fetch_column_widths(a)
 
     d = tabulate(a).map &:flatten
@@ -56,7 +70,7 @@ class TableFormatter
     bar = border == true ? '|' : ' '
     buffer = bar
     row.each_with_index do |col, i|
-      buffer += ' ' + col.ljust(col_widths[i] + 2) + bar    
+      buffer += ' ' + col.method(@align_cols[i]).call(col_widths[i] + 2) + bar
     end
     buffer
   end
@@ -76,6 +90,24 @@ class TableFormatter
     end
 
     a.map {|row| format_cols(row, col_widths)}
+  end
+
+  def just(x)
+
+    case x
+      when /^:.*:$/
+        [:center, x[1..-2]]
+      when /:$/
+        [:rjust, x[0..-2]]
+      when /^:/
+        [:ljust, x[1..-1]]
+      else
+        [:ljust, x]
+    end
+  end
+
+  def tabulate(a)
+    a[0].zip(a.length > 2 ? tabulate(a[1..-1]) : a[-1])
   end
 
   def wrap(s, col=@maxwidth)
