@@ -65,7 +65,7 @@ class TableFormatter
 
     @width = col_widths.inject(&:+)
 
-    col_widths[-1] -= col_widths.inject(&:+) - @maxwidth
+    col_widths[-1] -= col_widths.inject(&:+) - @maxwidth if @width > @maxwidth
 
     a.each_with_index do |x,i|
       col_rows = wrap(x[-1], col_widths[-1]).split(/\n/)
