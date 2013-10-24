@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'table-formatter'
-  s.version = '0.1.7'
+  s.version = '0.1.8'
   s.summary = 'table-formatter prints a table in plain text format from an array'
     s.authors = ['James Robertson']
   s.files = Dir['lib/**/*.rb'] 
