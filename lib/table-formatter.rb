@@ -71,17 +71,18 @@ class TableFormatter
   end
 
   def format_cols(row, col_widths)
+
     bar = ''
     bar = '|' if border == true
-    bar = divider if divider
 
-    buffer = divider ? '' : bar #unless divider
+    buffer = bar 
+
     row.each_with_index do |col, i|
 
       align = @align_cols ? @align_cols[i] : :ljust
       buffer += col.method(align).call(col_widths[i] + 2) + bar
     end
-    buffer.sub!(/#{bar}$/,'') if divider
+
     buffer
   end
 
@@ -99,7 +100,13 @@ class TableFormatter
       end
     end
 
-    a.map {|row| format_cols(row, col_widths)}
+    a.map do |row| 
+      if divider then
+        row.join(divider)
+      else
+        format_cols(row, col_widths)
+      end
+    end
   end
 
   def just(x)
