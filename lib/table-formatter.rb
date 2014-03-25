@@ -6,15 +6,14 @@ class TableFormatter
 
   attr_accessor :source, :labels, :border, :divider
   
-  def initialize(opt={})    
+  def initialize(source: nil, labels: nil, border: true, nowrap: false, divider: nil)    
 
-    o = {source: nil, labels: nil, border: true, nowrap: false}.merge(opt)
     super()
-    @source = o[:source]
-    @raw_labels = o[:labels] if o[:labels]
-    @border = o[:border]
-    @nowrap = o[:nowrap]
-    @divider = o[:divider] if o[:divider]
+    @source = source
+    @raw_labels = labels
+    @border = border
+    @nowrap = nowrap
+    @divider = divider
     @maxwidth = 60
   end
   
@@ -70,17 +69,19 @@ class TableFormatter
     d.map{|x| x.max_by(&:length).length}
   end
 
-  def format_cols(row, col_widths)
+  def format_cols(row, col_widths, bar='')
 
-    bar = ''
-    bar = '|' if border == true
-
-    buffer = bar 
+    outer_bar = ''
+    outer_bar = bar = '|' if border == true
+    col_spacer = @divider ? 1 : 2
+    
+    buffer = outer_bar
 
     row.each_with_index do |col, i|
 
       align = @align_cols ? @align_cols[i] : :ljust
-      buffer += col.method(align).call(col_widths[i] + 2) + bar
+      next_bar = (i < row.length - 1 || border)  ? bar : ''   
+      buffer += col.method(align).call(col_widths[i] + col_spacer) + next_bar
     end
 
     buffer
@@ -100,13 +101,8 @@ class TableFormatter
       end
     end
 
-    a.map do |row| 
-      if divider then
-        row.join(divider)
-      else
-        format_cols(row, col_widths)
-      end
-    end
+    a.map {|row| format_cols(row, col_widths, divider) }
+
   end
 
   def just(x)
