@@ -71,17 +71,23 @@ class TableFormatter
 
   def format_cols(row, col_widths, bar='')
 
-    outer_bar = ''
-    outer_bar = bar = '|' if border == true
-    col_spacer = @divider ? 1 : 2
+    outer_bar, inner_spacer = '', ''
+    (outer_bar = bar = '|'; inner_spacer = ' ') if border == true
+    col_spacer = @divider ? 0 : 2
     
     buffer = outer_bar
 
     row.each_with_index do |col, i|
 
       align = @align_cols ? @align_cols[i] : :ljust
-      next_bar = (i < row.length - 1 || border)  ? bar : ''   
-      buffer += col.method(align).call(col_widths[i] + col_spacer) + next_bar
+
+      val, next_bar =  if (i < row.length - 1 || border) then
+        [col.method(align).call(col_widths[i] + col_spacer), bar]
+      else
+        [col.method(align).call(col_widths[i] + col_spacer).rstrip, '']
+      end
+    
+      buffer += inner_spacer + val + next_bar
     end
 
     buffer
