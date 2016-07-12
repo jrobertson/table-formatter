@@ -10,24 +10,27 @@ class TableFormatter
 
     super()
     @source = source
-    @raw_labels = labels
+    @labels = labels
     @border = border
     @wrap = wrap
     @divider = divider
     @maxwidth = 60
+    
   end
   
-  def display(width=nil, widths: nil)
+  def display(width=nil, widths: nil, markdown: false)
+    
+    return display_markdown(@source, @labels) if markdown
 
-    if @raw_labels then
+    if @labels then
 
-      @align_cols, @labels = [], []
+      @align_cols, labels = [], []
 
-      @raw_labels.each do |raw_label|
+      @labels.each do |raw_label|
 
         col_just, label = just(raw_label)
         @align_cols << col_just
-        @labels << label
+        labels << label
       end
 
     end
@@ -35,8 +38,7 @@ class TableFormatter
     #width ||= @maxwidth
     @width = width
     @maxwidth = width if width
-    a = @source.map {|x| x.map.to_a}.to_a
-    labels = @labels
+    a = @source.map {|x| x.map{|y| y.length > 0 ? y : ' ' }}.to_a
 
     column_widths = widths ? widths : fetch_column_widths(a)
 
@@ -55,11 +57,33 @@ class TableFormatter
 
   alias to_s display
 
-  def labels=(a)
-    @raw_labels = a
-  end
 
   private
+
+  def display_markdown(a, fields)
+    
+    print_row = -> (row, widths) do
+      '| ' + row.map\
+          .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+    end
+
+    print_thline = -> (row, widths) do
+      '|:' + row.map\
+          .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
+    end
+
+    print_rows = -> (rows, widths) do
+      rows.map {|x| print_row.call(x,widths)}.join
+    end
+
+    widths = ([fields] + a).transpose.map{|x| x.max_by(&:length).length}
+    th = '|' + fields.join('|') + "|\n"
+    th = print_row.call(fields, widths)
+    th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
+
+    tb = print_rows.call(a, widths)
+    table = th + th_line + tb
+  end
   
   def fetch_column_widths(a)
 
