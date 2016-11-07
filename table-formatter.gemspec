@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'table-formatter'
-  s.version = '0.3.0'
+  s.version = '0.4.0'
   s.summary = 'table-formatter prints a table in plain text format or Markdown format from an array'
     s.authors = ['James Robertson']
   s.files = Dir['lib/table-formatter.rb'] 

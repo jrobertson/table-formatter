@@ -4,9 +4,10 @@
 
 class TableFormatter
 
-  attr_accessor :source, :labels, :border, :divider
+  attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify
   
-  def initialize(source: nil, labels: nil, border: true, wrap: true, divider: nil)    
+  def initialize(source: nil, labels: nil, border: true, wrap: true, 
+                 divider: nil, markdown: false)    
 
     super()
     @source = source
@@ -15,13 +16,34 @@ class TableFormatter
     @wrap = wrap
     @divider = divider
     @maxwidth = 60
+    @markdown = markdown
     
   end
   
-  def display(width=nil, widths: nil, markdown: false)
+  def justify(s, ajust)
     
-    return display_markdown(@source, @labels) if markdown
+    a = s.split('|')
+    
+    a2 = ajust.map.with_index do |x,i|
+      
+      s = a[i+1]
 
+      case x
+      when :r
+        '-' * (s.length - 1) + ':'
+      when :l
+        ':' + '-' * (s.length - 1)
+      when
+        ':' + '-' * (s.length - 2) + ':'
+      end
+    end
+
+    "|%s|\n" % a2.join('|')    
+
+  end
+  
+  def display(width=nil, widths: nil, markdown: @markdown)
+    
     if @labels then
 
       @align_cols, labels = [], []
@@ -34,6 +56,12 @@ class TableFormatter
       end
 
     end
+        
+    @col_justify = @align_cols.map do |col|
+      {ljust: :l, rjust: :r, center: :c}[col]
+    end
+
+    return display_markdown(@source, labels) if markdown    
 
     #width ||= @maxwidth
     @width = width
@@ -63,8 +91,11 @@ class TableFormatter
   def display_markdown(a, fields)
     
     print_row = -> (row, widths) do
-      '| ' + row.map\
-          .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+      
+      '| ' + row.map.with_index do |y,i| 
+          align = @align_cols ? @align_cols[i] : :ljust        
+          y.to_s.method(align).call(widths[i])
+      end.join(' | ') + " |\n"
     end
 
     print_thline = -> (row, widths) do
@@ -81,8 +112,10 @@ class TableFormatter
     th = print_row.call(fields, widths)
     th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
 
+    th_line2 = justify(th_line, @col_justify)
+
     tb = print_rows.call(a, widths)
-    table = th + th_line + tb
+    table = th + th_line2 + tb
   end
   
   def fetch_column_widths(a)
@@ -151,7 +184,7 @@ class TableFormatter
   end
 
   def just(x)
-
+    
     case x
       when /^:.*:$/
         [:center, x[1..-2]]
