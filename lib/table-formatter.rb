@@ -44,19 +44,19 @@ class TableFormatter
   
   def display(width=nil, widths: nil, markdown: @markdown)
     
+    @align_cols = []
     if @labels then
 
-      @align_cols, labels = [], []
+      labels = []
 
       @labels.each do |raw_label|
-
         col_just, label = just(raw_label)
         @align_cols << col_just
         labels << label
       end
 
     end
-        
+
     @col_justify = @align_cols.map do |col|
       {ljust: :l, rjust: :r, center: :c}[col]
     end
@@ -127,7 +127,7 @@ class TableFormatter
   end
   
   def format_cols(row, col_widths, bar='')
-    
+
     outer_bar, inner_spacer = '', ''
     (outer_bar = bar = '|'; inner_spacer = ' ') if border == true
     col_spacer = @divider ? 0 : 2
@@ -137,7 +137,7 @@ class TableFormatter
     
     row.each_with_index do |col, i|
 
-      align = @align_cols ? @align_cols[i] : :ljust
+      align = @align_cols.any? ? @align_cols[i] : :ljust
 
       val, next_bar =  if (i < row.length - 1 || border) then
         [col.method(align).call(col_widths[i] + col_spacer), bar]
