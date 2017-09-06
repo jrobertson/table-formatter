@@ -7,7 +7,7 @@ class TableFormatter
   attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify
   
   def initialize(source: nil, labels: nil, border: true, wrap: true, 
-                 divider: nil, markdown: false)    
+                 divider: nil, markdown: false, innermarkdown: false)    
 
     super()
     @source = source
@@ -17,6 +17,7 @@ class TableFormatter
     @divider = divider
     @maxwidth = 60
     @markdown = markdown
+    @innermarkdown = innermarkdown
     
   end
   
@@ -87,8 +88,77 @@ class TableFormatter
 
 
   private
-
+  
   def display_markdown(a, fields)
+    
+      print_row = -> (row, widths) do
+        '| ' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+      end
+
+      print_thline = -> (row, widths) do
+        '|:' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
+      end
+
+      print_rows = -> (rows, widths) do
+        rows.map {|x| print_row.call(x,widths)}.join
+      end
+
+      
+      raw_vals = a
+
+      # create Markdown hyperlinks for any URLs
+      
+      vals = raw_vals.map do |row|
+
+        row.map do |col|
+
+          found_match = col.match(/^https?:\/\/([^\/]+)(.*)/)
+
+          r = if found_match then
+
+            domain, path = found_match.captures
+
+            a = domain.split('.')
+            a.shift if a.length > 2
+            url_title = (a.join('.') + path)[0..39] + '...'
+
+            "[%s](%s)" % [url_title, col]
+            
+          else
+            
+            if @innermarkdown then 
+              "{::nomarkdown}" + 
+                  RDiscount.new(col).to_html.strip.gsub("\n",'') + "{:/}"
+            else
+
+              col
+              
+            end
+            
+          end
+          
+          r
+        end
+      end      
+
+      widths = ([(fields + ['']).take(a.first.length)] + 
+                vals).transpose.map{|x| x.max_by(&:length).length}
+
+      th = if @labels then        
+        print_row.call(@labels, widths)
+      else
+        ''
+      end
+      
+      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths        
+      tb = print_rows.call(vals, widths)      
+        
+      table = th + th_line + tb    
+  end
+
+  def display_markdown2(a, fields)
     
     print_row = -> (row, widths) do
       
@@ -124,6 +194,7 @@ class TableFormatter
 
     # find the maximum lengths
     d.map{|x| x.max_by(&:length).length}
+
   end
   
   def format_cols(row, col_widths, bar='')
