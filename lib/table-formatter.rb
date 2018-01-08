@@ -10,7 +10,7 @@ class TableFormatter
                  divider: nil, markdown: false, innermarkdown: false)    
 
     super()
-    @source = source.map {|x| x.map(&:to_s)}
+    @source = source.map {|x| x.map(&:to_s)} if source
     @labels = labels
     @border = border
     @wrap = wrap
