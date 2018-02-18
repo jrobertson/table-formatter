@@ -7,7 +7,7 @@ class TableFormatter
   attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify
   
   def initialize(source: nil, labels: nil, border: true, wrap: true, 
-                 divider: nil, markdown: false, innermarkdown: false)    
+             divider: nil, markdown: false, innermarkdown: false, debug: false)
 
     super()
     @source = source.map {|x| x.map(&:to_s)} if source
@@ -18,6 +18,7 @@ class TableFormatter
     @maxwidth = 60
     @markdown = markdown
     @innermarkdown = innermarkdown
+    @debug = debug
     
   end
   
@@ -94,13 +95,20 @@ class TableFormatter
       print_row = -> (row, widths) do
         '| ' + row.map\
             .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
-      end
+      end         
 
       print_thline = -> (row, widths) do
         '|:' + row.map\
             .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
       end
-
+      
+      if @debug then
+        
+        puts '@labels: ' + @labels.inspect
+        puts 'thline: ' + print_thline.inspect
+        
+      end
+      
       print_rows = -> (rows, widths) do
         rows.map {|x| print_row.call(x,widths)}.join
       end
@@ -147,15 +155,16 @@ class TableFormatter
                 vals).transpose.map{|x| x.max_by(&:length).length}
 
       th = if @labels then        
-        print_row.call(@labels, widths)
+        print_row.call(fields, widths)
       else
         ''
       end
       
       th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths        
       tb = print_rows.call(vals, widths)      
-        
-      table = th + th_line + tb    
+      th_line2 = justify(th_line, @col_justify)  
+      
+      table = th + th_line2 + tb    
   end
 
   def display_markdown2(a, fields)
@@ -189,9 +198,10 @@ class TableFormatter
   end
   
   def fetch_column_widths(a)
-
+    
+    puts 'a: ' + a.inspect if @debug
     d = tabulate(a).map &:flatten
-
+    puts 'd: ' + d.inspect if @debug
     # find the maximum lengths
     d.map{|x| x.max_by(&:length).length}
 
