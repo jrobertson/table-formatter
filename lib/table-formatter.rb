@@ -2,6 +2,9 @@
 
 # file: table-formatter.rb
 
+require 'rdiscount'
+
+
 class TableFormatter
 
   attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify

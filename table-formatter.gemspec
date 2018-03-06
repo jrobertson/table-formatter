@@ -1,10 +1,11 @@
 Gem::Specification.new do |s|
   s.name = 'table-formatter'
-  s.version = '0.4.5'
+  s.version = '0.5.0'
   s.summary = 'table-formatter prints a table in plain text format or ' + 
       'Markdown format from an array'
   s.authors = ['James Robertson']
   s.files = Dir['lib/table-formatter.rb'] 
+  s.add_runtime_dependency('rdiscount', '~> 2.2', '>=2.2.0.1')  
   s.signing_key = '../privatekeys/table-formatter.pem'
   s.cert_chain  = ['gem-public_cert.pem']
   s.license = 'MIT'
