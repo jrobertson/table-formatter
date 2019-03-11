@@ -163,7 +163,7 @@ class TableFormatter
                 vals).transpose.map{|x| x.max_by(&:length).length}
       end
 
-      th = if @labels then        
+      th = if @labels.map(&:strip).join.length > 0 then        
         print_row.call(fields, widths)
       else
         ''
