@@ -2,10 +2,11 @@
 
 # file: table-formatter.rb
 
+require 'c32'
 require 'rdiscount'
 
-
 class TableFormatter
+  using ColouredText
 
   attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify
   
@@ -50,6 +51,8 @@ class TableFormatter
   def display(width=nil, widths: nil, markdown: @markdown)
     
     @align_cols = []
+    @labels ||= [''] * @source.first.length
+    
     if @labels then
 
       labels = []
@@ -93,7 +96,7 @@ class TableFormatter
 
   private
   
-  def display_markdown(a, fields)
+  def display_markdown(a, fields)    
     
       print_row = -> (row, widths) do
         '| ' + row.map\
@@ -154,8 +157,11 @@ class TableFormatter
         end
       end      
 
-      widths = ([(fields + ['']).take(a.first.length)] + 
+      puts ('fields: ' + fields.inspect).debug if @debug
+      if fields then
+        widths = ([(fields + ['']).take(a.first.length)] + 
                 vals).transpose.map{|x| x.max_by(&:length).length}
+      end
 
       th = if @labels then        
         print_row.call(fields, widths)
