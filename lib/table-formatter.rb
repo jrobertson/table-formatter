@@ -74,7 +74,9 @@ class TableFormatter
     #width ||= @maxwidth
     @width = width
     @maxwidth = width if width
-    a = @source.map {|x| x.map{|y| y.length > 0 ? y : ' ' }}.to_a
+    a = @source.map do |x|
+      x.map{|y| col = y.to_s; col.length > 0 ? col : ' ' }
+    end.to_a
 
     column_widths = widths ? widths : fetch_column_widths(a)
 
