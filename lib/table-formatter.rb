@@ -9,8 +9,8 @@ class TableFormatter
   using ColouredText
 
   attr_accessor :source, :labels, :border, :divider, :markdown, :col_justify
-  
-  def initialize(source: nil, labels: nil, border: true, wrap: true, 
+
+  def initialize(source: nil, labels: nil, border: true, wrap: true,
              divider: nil, markdown: false, innermarkdown: false, debug: false)
 
     super()
@@ -23,15 +23,15 @@ class TableFormatter
     @markdown = markdown
     @innermarkdown = innermarkdown
     @debug = debug
-    
+
   end
-  
+
   def justify(s, ajust)
-    
+
     a = s.split('|')
-    
+
     a2 = ajust.map.with_index do |x,i|
-      
+
       s = a[i+1]
 
       case x
@@ -44,15 +44,15 @@ class TableFormatter
       end
     end
 
-    "|%s|\n" % a2.join('|')    
+    "|%s|\n" % a2.join('|')
 
   end
-  
+
   def display(width=nil, widths: nil, markdown: @markdown)
-    
+
     @align_cols = []
     @labels ||= [''] * @source.first.length
-    
+
     if @labels then
 
       labels = []
@@ -69,7 +69,7 @@ class TableFormatter
       {ljust: :l, rjust: :r, center: :c}[col]
     end
 
-    return display_markdown(@source, labels) if markdown    
+    return display_markdown(@source, labels) if markdown
 
     #width ||= @maxwidth
     @width = width
@@ -86,7 +86,7 @@ class TableFormatter
 
     div =  (border == true ? '-' : '') * records[0].length + "\n"
     label_buffer = ''
-    
+
     label_buffer = format_cols(labels, column_widths) + "\n" + div if labels
 
     div + label_buffer + records.join("\n") + "\n" + div
@@ -97,35 +97,35 @@ class TableFormatter
 
 
   private
-  
-  def display_markdown(a, fields)    
-    
+
+  def display_markdown(a, fields)
+
       print_row = -> (row, widths) do
         '| ' + row.map\
             .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
-      end         
+      end
 
       print_thline = -> (row, widths) do
         '|:' + row.map\
             .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
       end
-      
+
       if @debug then
-        
+
         puts '@labels: ' + @labels.inspect
         puts 'thline: ' + print_thline.inspect
-        
+
       end
-      
+
       print_rows = -> (rows, widths) do
         rows.map {|x| print_row.call(x,widths)}.join
       end
 
-      
+
       raw_vals = a
 
       # create Markdown hyperlinks for any URLs
-      
+
       vals = raw_vals.map do |row|
 
         row.map do |col|
@@ -141,49 +141,49 @@ class TableFormatter
             url_title = (a.join('.') + path)[0..39] + '...'
 
             "[%s](%s)" % [url_title, col]
-            
+
           else
-            
-            if @innermarkdown then 
-              "{::nomarkdown}" + 
+
+            if @innermarkdown then
+              "{::nomarkdown}" +
                   RDiscount.new(col).to_html.strip.gsub("\n",'') + "{:/}"
             else
 
               col
-              
+
             end
-            
+
           end
-          
+
           r
         end
-      end      
+      end
 
       puts ('fields: ' + fields.inspect).debug if @debug
       if fields then
-        widths = ([(fields + ['']).take(a.first.length)] + 
+        widths = ([(fields + ['']).take(a.first.length)] +
                 vals).transpose.map{|x| x.max_by(&:length).length}
       end
 
-      th = if @labels.map(&:strip).join.length > 0 then        
+      th = if @labels.map(&:strip).join.length > 0 then
         print_row.call(fields, widths)
       else
         ''
       end
-      
-      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths        
-      tb = print_rows.call(vals, widths)      
-      th_line2 = justify(th_line, @col_justify)  
-      
-      table = th + th_line2 + tb    
+
+      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
+      tb = print_rows.call(vals, widths)
+      th_line2 = justify(th_line, @col_justify)
+
+      table = th + th_line2 + tb
   end
 
   def display_markdown2(a, fields)
-    
+
     print_row = -> (row, widths) do
-      
-      '| ' + row.map.with_index do |y,i| 
-          align = @align_cols ? @align_cols[i] : :ljust        
+
+      '| ' + row.map.with_index do |y,i|
+          align = @align_cols ? @align_cols[i] : :ljust
           y.to_s.method(align).call(widths[i])
       end.join(' | ') + " |\n"
     end
@@ -207,9 +207,9 @@ class TableFormatter
     tb = print_rows.call(a, widths)
     table = th + th_line2 + tb
   end
-  
+
   def fetch_column_widths(a)
-    
+
     puts 'a: ' + a.inspect if @debug
     d = tabulate(a).map &:flatten
     puts 'd: ' + d.inspect if @debug
@@ -217,16 +217,18 @@ class TableFormatter
     d.map{|x| x.max_by(&:length).length}
 
   end
-  
+
   def format_cols(row, col_widths, bar='')
 
-    outer_bar, inner_spacer = '', ''
-    (outer_bar = bar = '|'; inner_spacer = ' ') if border == true
+    outer_bar = ''
+    inner_spacer = border ? ' ' : ''
+    outer_bar = border ? '|' : ''
+    #(outer_bar = bar = '|'; inner_spacer = ' ') if border == true
     col_spacer = @divider ? 0 : 2
-    
+
     buffer = outer_bar
 
-    
+
     row.each_with_index do |col, i|
 
       align = @align_cols.any? ? @align_cols[i] : :ljust
@@ -238,45 +240,46 @@ class TableFormatter
       end
 
       buffer += inner_spacer + val + next_bar.to_s
-    end    
-    
+      puts 'buffer: ' + buffer.inspect if @debug
+    end
+
     buffer
 
-  end  
+  end
 
   def format_rows(raw_a, col_widths)
 
     @width = col_widths.inject(&:+)
 
     col_widths[-1] -= col_widths.inject(&:+) - @maxwidth if @width > @maxwidth
-   
+
     a = if @wrap == true then
-    
+
       raw_a.map do |raw_row|
 
         rowx = raw_row.map.with_index do |col, i|
           col.chars.each_slice(col_widths[i]).map(&:join)
-        end    
-        
+        end
+
         max_len = rowx.max_by {|x| x.length}.length
-        
-        rowx.each do |x| 
+
+        rowx.each do |x|
           len = x.length
           x.concat ([''] * (max_len - len)) if len < max_len
         end
-        
+
         rowx.transpose
       end.flatten(1)
     else
       raw_a
     end
-    
+
     a.map {|row| format_cols(row, col_widths, divider) }
 
   end
 
   def just(x)
-    
+
     case x
       when /^:.*:$/
         [:center, x[1..-2]]
